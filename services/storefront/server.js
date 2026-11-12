@@ -7,8 +7,13 @@ const PORT = Number(process.env.PORT) || 3000;
 const INDEX_FILE = path.join(__dirname, "public", "index.html");
 const SEARCH_URL = process.env.SEARCH_URL || "http://127.0.0.1:3002";
 const RECOMMENDATIONS_URL = process.env.RECOMMENDATIONS_URL || "http://127.0.0.1:3003";
+const CHATBOT_URL = process.env.CHATBOT_URL || "http://127.0.0.1:3005";
 
-function createServer({ searchUrl = SEARCH_URL, recommendationsUrl = RECOMMENDATIONS_URL } = {}) {
+function createServer({
+  searchUrl = SEARCH_URL,
+  recommendationsUrl = RECOMMENDATIONS_URL,
+  chatbotUrl = CHATBOT_URL,
+} = {}) {
   return http.createServer(async (request, response) => {
     const url = new URL(request.url, `http://${request.headers.host ?? "localhost"}`);
 
@@ -41,6 +46,23 @@ function createServer({ searchUrl = SEARCH_URL, recommendationsUrl = RECOMMENDAT
         sendJson(response, statusCode, {
           error: statusCode === 400 ? error.message : "Recommendations are temporarily unavailable.",
         });
+      }
+      return;
+    }
+    if (request.method === "POST" && url.pathname === "/api/chat") {
+      try {
+        const upstream = await fetch(new URL("/api/chat", chatbotUrl), {
+          method: "POST",
+          headers: { "Content-Type": request.headers["content-type"] ?? "application/json" },
+          body: request,
+          duplex: "half",
+          signal: AbortSignal.timeout(10000),
+        });
+        const body = await upstream.json();
+        sendJson(response, upstream.status, body);
+      } catch (error) {
+        console.error(`Chatbot service request failed: ${error.message}`);
+        sendJson(response, 502, { error: "The shopping assistant is temporarily unavailable." });
       }
       return;
     }

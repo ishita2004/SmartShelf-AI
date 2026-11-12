@@ -26,6 +26,60 @@ spec:
               value: http://smartshelf-search:3002
             - name: RECOMMENDATIONS_URL
               value: http://smartshelf-recommendations:3003
+            - name: CHATBOT_URL
+              value: http://smartshelf-chatbot:3005
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smartshelf-chatbot
+  labels:
+    app: smartshelf-chatbot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smartshelf-chatbot
+  template:
+    metadata:
+      labels:
+        app: smartshelf-chatbot
+    spec:
+      containers:
+        - name: chatbot
+          image: YOUR_ACR_NAME.azurecr.io/smartshelf-chatbot:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3005
+          env:
+            - name: RECOMMENDATIONS_URL
+              value: http://smartshelf-recommendations:3003
           readinessProbe:
             httpGet:
               path: /health

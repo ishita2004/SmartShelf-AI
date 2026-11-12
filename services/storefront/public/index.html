@@ -3,176 +3,368 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#f5f4ef">
-    <title>SmartShelf AI — Finds for you</title>
+    <meta name="theme-color" content="#f7f5ef">
+    <meta name="description" content="Find thoughtful products picked for your interests with SmartShelf AI.">
+    <title>SmartShelf AI — Shop what feels like you</title>
     <style>
       :root {
         color-scheme: light;
-        --ink: #1d2b24;
-        --muted: #64736a;
+        --ink: #17241d;
+        --muted: #68766d;
         --green: #245c43;
-        --green-dark: #194733;
-        --paper: #f5f4ef;
+        --green-dark: #193f30;
+        --mint: #e7f0e9;
+        --paper: #f7f5ef;
         --white: #fff;
-        --line: #e4e6df;
+        --line: #e7e8e1;
+        --orange: #e88959;
+        --shadow: 0 18px 50px #173a2910;
       }
 
       * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
       body {
         margin: 0;
         background: var(--paper);
         color: var(--ink);
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
-      header {
+      a { color: inherit; text-decoration: none; }
+      button, input, select { font: inherit; }
+      button { cursor: pointer; }
+      .skip-link {
+        background: var(--white);
+        border-radius: 8px;
+        left: 16px;
+        padding: 10px 14px;
+        position: absolute;
+        top: -60px;
+        z-index: 3;
+      }
+      .skip-link:focus { top: 16px; }
+      .topbar {
         align-items: center;
+        background: #fff;
         border-bottom: 1px solid var(--line);
         display: flex;
         justify-content: space-between;
-        padding: 20px max(24px, calc((100% - 1120px) / 2));
+        padding: 15px max(24px, calc((100% - 1180px) / 2));
       }
-      .brand { font-size: 19px; font-weight: 800; letter-spacing: -0.6px; }
-      .brand span { color: var(--green); }
-      .badge {
-        background: #e6eee8;
+      .brand { font-size: 20px; font-weight: 850; letter-spacing: -1px; }
+      .brand-mark { color: var(--green); }
+      .nav { align-items: center; display: flex; gap: 27px; }
+      .nav a { color: #536157; font-size: 13px; font-weight: 650; }
+      .nav a:hover { color: var(--green); }
+      .nav-cta {
+        background: var(--green);
         border-radius: 999px;
-        color: var(--green-dark);
-        font-size: 12px;
-        font-weight: 700;
-        padding: 8px 12px;
+        color: white !important;
+        padding: 10px 16px;
       }
-      main { margin: 0 auto; max-width: 1120px; padding: 54px 24px 72px; }
-      .hero { max-width: 680px; }
+      main { margin: 0 auto; max-width: 1180px; padding: 36px 24px 72px; }
+      .hero {
+        align-items: center;
+        background:
+          radial-gradient(ellipse at 82% 18%, #dcecdf 0, transparent 33%),
+          linear-gradient(120deg, #f8f6f0 0%, #f2f4ec 100%);
+        border: 1px solid #e8eae1;
+        border-radius: 30px;
+        display: grid;
+        gap: 35px;
+        grid-template-columns: 1.08fr .92fr;
+        min-height: 390px;
+        overflow: hidden;
+        padding: clamp(32px, 6vw, 72px);
+        position: relative;
+      }
       .eyebrow {
+        align-items: center;
         color: var(--green);
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 1.6px;
+        display: inline-flex;
+        font-size: 11px;
+        font-weight: 850;
+        gap: 8px;
+        letter-spacing: 1.5px;
         text-transform: uppercase;
       }
-      h1 {
-        font-size: clamp(38px, 7vw, 66px);
-        letter-spacing: -3.4px;
-        line-height: 1.04;
-        margin: 14px 0;
+      .eyebrow::before { background: var(--orange); border-radius: 50%; content: ""; height: 8px; width: 8px; }
+      h1 { font-size: clamp(42px, 6vw, 72px); letter-spacing: -4px; line-height: .99; margin: 18px 0; max-width: 620px; }
+      h1 em { color: var(--green); font-style: normal; }
+      .hero-copy { color: var(--muted); font-size: 16px; line-height: 1.75; margin: 0; max-width: 470px; }
+      .hero-actions { display: flex; flex-wrap: wrap; gap: 11px; margin-top: 26px; }
+      .button {
+        align-items: center;
+        border: 0;
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 13px;
+        font-weight: 750;
+        gap: 9px;
+        justify-content: center;
+        min-height: 46px;
+        padding: 0 20px;
+        transition: background .18s, transform .18s;
       }
-      .intro { color: var(--muted); font-size: 17px; line-height: 1.7; margin: 0; }
-      .panel {
-        background: var(--white);
+      .button:hover { transform: translateY(-1px); }
+      .button-primary { background: var(--green); color: white; }
+      .button-primary:hover { background: var(--green-dark); }
+      .button-secondary { background: white; border: 1px solid var(--line); color: var(--ink); }
+      .hero-art { align-items: center; display: flex; justify-content: center; min-height: 250px; position: relative; }
+      .orbit {
+        align-items: center;
+        background: #e2eee3;
+        border: 1px solid #d5e5d7;
+        border-radius: 50%;
+        display: flex;
+        height: min(290px, 30vw);
+        justify-content: center;
+        min-height: 210px;
+        min-width: 210px;
+        position: relative;
+        width: min(290px, 30vw);
+      }
+      .orbit::before, .orbit::after { border: 1px solid #cfe0d1; border-radius: 50%; content: ""; inset: 20px; position: absolute; }
+      .orbit::after { inset: 42px; }
+      .hero-product {
+        align-items: center;
+        background: #fff;
+        border: 1px solid #edf0e9;
+        border-radius: 22px;
+        box-shadow: 0 22px 50px #21493220;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        justify-content: center;
+        min-height: 160px;
+        min-width: 160px;
+        position: relative;
+        transform: rotate(-6deg);
+        z-index: 1;
+      }
+      .hero-product-icon { font-size: 56px; }
+      .hero-product strong { font-size: 12px; }
+      .float-chip {
+        background: white;
+        border: 1px solid #e8ece4;
+        border-radius: 999px;
+        box-shadow: 0 10px 30px #173a2910;
+        font-size: 12px;
+        font-weight: 750;
+        padding: 11px 15px;
+        position: absolute;
+        z-index: 2;
+      }
+      .float-chip.top { right: 3%; top: 17%; }
+      .float-chip.bottom { bottom: 14%; left: 1%; }
+      .benefits { display: grid; gap: 14px; grid-template-columns: repeat(3, 1fr); margin: 20px 0 34px; }
+      .benefit {
+        align-items: center;
+        background: #fff;
         border: 1px solid var(--line);
-        border-radius: 20px;
-        margin-top: 36px;
-        padding: 28px;
+        border-radius: 16px;
+        display: flex;
+        gap: 12px;
+        padding: 16px;
       }
-      .panel-heading { align-items: end; display: flex; justify-content: space-between; gap: 20px; }
-      h2 { font-size: 19px; letter-spacing: -0.4px; margin: 0; }
-      .hint { color: var(--muted); font-size: 13px; margin: 7px 0 0; }
-      .interests { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0; }
+      .benefit-icon { align-items: center; background: var(--mint); border-radius: 12px; display: flex; flex: 0 0 40px; height: 40px; justify-content: center; }
+      .benefit strong { display: block; font-size: 12px; }
+      .benefit span:last-child { color: var(--muted); display: block; font-size: 11px; margin-top: 4px; }
+      .section { margin-top: 52px; scroll-margin-top: 26px; }
+      .section-heading { align-items: end; display: flex; justify-content: space-between; gap: 18px; margin-bottom: 20px; }
+      .section-kicker { color: var(--green); font-size: 10px; font-weight: 850; letter-spacing: 1.5px; text-transform: uppercase; }
+      h2 { font-size: clamp(23px, 3vw, 31px); letter-spacing: -1px; margin: 7px 0 0; }
+      .hint { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 7px 0 0; }
+      .panel { background: white; border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); padding: clamp(20px, 4vw, 32px); }
+      .interests { display: flex; flex-wrap: wrap; gap: 9px; margin: 22px 0; }
       .interest { cursor: pointer; position: relative; }
       .interest input { height: 1px; opacity: 0; position: absolute; width: 1px; }
       .interest span {
+        background: #fff;
         border: 1px solid var(--line);
         border-radius: 999px;
-        color: #48574e;
+        color: #46534a;
         display: block;
-        font-size: 14px;
-        padding: 10px 15px;
-        transition: background .15s, border-color .15s, color .15s;
+        font-size: 13px;
+        font-weight: 650;
+        padding: 10px 14px;
+        transition: background .16s, border-color .16s, color .16s;
       }
       .interest input:checked + span { background: var(--green); border-color: var(--green); color: white; }
       .interest input:focus-visible + span { outline: 3px solid #a9cdb6; outline-offset: 2px; }
-      button {
-        background: var(--green);
-        border: 0;
-        border-radius: 10px;
-        color: white;
-        cursor: pointer;
-        font: inherit;
-        font-size: 14px;
-        font-weight: 700;
-        padding: 13px 18px;
-      }
-      button:hover { background: var(--green-dark); }
-      button:disabled { cursor: wait; opacity: .65; }
-      .status { color: var(--muted); font-size: 14px; min-height: 22px; }
-      .results { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 20px; }
-      .card { background: var(--white); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
-      .card-top { align-items: start; display: flex; justify-content: space-between; gap: 12px; }
-      .category { color: var(--green); font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
-      .score { background: #eaf2ec; border-radius: 999px; color: var(--green-dark); font-size: 11px; font-weight: 800; padding: 6px 9px; white-space: nowrap; }
-      .popular { background: #f3efe1; border-radius: 999px; color: #70591a; font-size: 11px; font-weight: 800; padding: 6px 9px; white-space: nowrap; }
-      .card h3 { font-size: 17px; letter-spacing: -.3px; margin: 13px 0 8px; }
-      .card p { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 0; }
-      .rating { color: #80621b !important; font-size: 12px !important; margin-top: 12px !important; }
-      .card-bottom { align-items: center; border-top: 1px solid var(--line); display: flex; justify-content: space-between; margin-top: 18px; padding-top: 14px; }
-      .price { font-size: 16px; font-weight: 800; }
-      .match { color: var(--muted); font-size: 11px; text-align: right; }
-      .catalog-controls { display: grid; gap: 12px; grid-template-columns: 2fr 1fr 1fr; margin-top: 20px; }
-      .catalog-controls input, .catalog-controls select {
-        background: white;
+      .status { color: var(--muted); font-size: 13px; line-height: 1.5; min-height: 20px; }
+      .results { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 18px; }
+      .card {
+        background: #fff;
         border: 1px solid var(--line);
-        border-radius: 10px;
-        color: var(--ink);
-        font: inherit;
-        font-size: 14px;
+        border-radius: 17px;
+        display: flex;
+        flex-direction: column;
         min-width: 0;
-        padding: 12px;
+        overflow: hidden;
+        transition: box-shadow .18s, transform .18s;
       }
+      .card:hover { box-shadow: 0 14px 35px #173a2915; transform: translateY(-3px); }
+      .product-visual { align-items: center; background: linear-gradient(135deg, #edf4ed, #f7f2e8); display: flex; height: 130px; justify-content: center; position: relative; }
+      .product-emoji { filter: drop-shadow(0 8px 8px #173a2920); font-size: 54px; }
+      .product-visual::before { border: 1px solid #ffffffa6; border-radius: 50%; content: ""; height: 94px; position: absolute; width: 94px; }
+      .card-content { display: flex; flex: 1; flex-direction: column; padding: 16px; }
+      .card-top { align-items: start; display: flex; justify-content: space-between; gap: 9px; }
+      .category { color: var(--green); font-size: 10px; font-weight: 850; letter-spacing: 1px; text-transform: uppercase; }
+      .score, .popular { border-radius: 999px; font-size: 10px; font-weight: 800; padding: 6px 8px; white-space: nowrap; }
+      .score { background: var(--mint); color: var(--green-dark); }
+      .popular { background: #f7efdc; color: #70591a; }
+      .card h3 { font-size: 15px; letter-spacing: -.3px; line-height: 1.35; margin: 12px 0 7px; }
+      .card-description { color: var(--muted); font-size: 12px; line-height: 1.55; margin: 0; }
+      .rating { color: #80621b; font-size: 11px; margin: 11px 0 0; }
+      .card-bottom { align-items: end; border-top: 1px solid var(--line); display: flex; justify-content: space-between; margin-top: auto; padding-top: 13px; }
+      .price { font-size: 16px; font-weight: 850; }
+      .match { color: var(--muted); font-size: 10px; max-width: 55%; text-align: right; }
+      .catalog-tools { display: grid; gap: 10px; grid-template-columns: minmax(180px, 2fr) 1fr 1fr; margin-top: 20px; }
+      .catalog-tools input, .catalog-tools select, .chat-input {
+        background: #fff;
+        border: 1px solid #dfe4dc;
+        border-radius: 11px;
+        color: var(--ink);
+        font-size: 13px;
+        min-width: 0;
+        padding: 12px 14px;
+      }
+      .catalog-tools input:focus, .catalog-tools select:focus, .chat-input:focus { border-color: var(--green); outline: 3px solid #245c431c; }
       .empty { color: var(--muted); grid-column: 1 / -1; padding: 10px 0; }
-      footer { color: var(--muted); font-size: 12px; line-height: 1.6; margin-top: 28px; }
-      @media (max-width: 760px) {
-        main { padding-top: 38px; }
+      .assistant {
+        background: #183c2d;
+        border-radius: 24px;
+        color: white;
+        display: grid;
+        gap: 26px;
+        grid-template-columns: .8fr 1.2fr;
+        overflow: hidden;
+        padding: clamp(22px, 4vw, 36px);
+      }
+      .assistant-copy { padding: 6px 0; }
+      .assistant-copy .section-kicker { color: #b7d3bd; }
+      .assistant-copy h2 { font-size: 28px; }
+      .assistant-copy p { color: #d3e2d5; font-size: 13px; line-height: 1.65; }
+      .assistant-copy .prompt { color: #e4efe5; font-size: 11px; }
+      .chat-box { background: #fff; border-radius: 17px; color: var(--ink); display: flex; flex-direction: column; min-height: 300px; overflow: hidden; }
+      .chat-header { align-items: center; border-bottom: 1px solid var(--line); display: flex; gap: 11px; padding: 13px 15px; }
+      .bot-avatar { align-items: center; background: var(--mint); border-radius: 50%; display: flex; height: 36px; justify-content: center; width: 36px; }
+      .chat-header strong { display: block; font-size: 12px; }
+      .chat-header small { color: var(--muted); display: block; font-size: 10px; margin-top: 3px; }
+      .online-dot { background: #57aa72; border: 2px solid #fff; border-radius: 50%; height: 10px; margin-left: auto; width: 10px; }
+      .chat-messages { display: flex; flex: 1; flex-direction: column; gap: 11px; max-height: 340px; min-height: 155px; overflow-y: auto; padding: 15px; }
+      .message { align-self: flex-start; background: #f2f5f1; border-radius: 4px 14px 14px; color: #35433a; font-size: 12px; line-height: 1.55; max-width: 88%; padding: 10px 12px; white-space: pre-wrap; }
+      .message.user { align-self: flex-end; background: var(--green); border-radius: 14px 4px 14px 14px; color: white; }
+      .chat-products { display: grid; gap: 8px; grid-template-columns: 1fr; }
+      .chat-products .card { border-radius: 12px; }
+      .chat-products .product-visual { height: 75px; }
+      .chat-products .product-visual::before { height: 55px; width: 55px; }
+      .chat-products .product-emoji { font-size: 32px; }
+      .chat-products .card-content { padding: 11px; }
+      .chat-products .card h3 { font-size: 12px; margin: 7px 0 4px; }
+      .chat-products .card-description, .chat-products .rating { display: none; }
+      .chat-products .card-bottom { padding-top: 8px; }
+      .chat-form { border-top: 1px solid var(--line); display: flex; gap: 8px; padding: 12px; }
+      .chat-input { flex: 1; }
+      .send-button { background: var(--green); border: 0; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 750; padding: 0 16px; }
+      .send-button:hover { background: var(--green-dark); }
+      .send-button:disabled { cursor: wait; opacity: .65; }
+      .site-footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; line-height: 1.6; margin-top: 52px; padding: 23px 0 0; }
+      .footer-row { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
+      @media (max-width: 780px) {
+        main { padding-top: 20px; }
+        .hero { grid-template-columns: 1fr; min-height: auto; padding: 34px 26px 20px; }
+        .hero-art { min-height: 235px; }
+        .orbit { height: 220px; width: 220px; }
+        .benefits { grid-template-columns: 1fr; }
+        .assistant { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 560px) {
+        .topbar { padding: 13px 18px; }
+        .nav { gap: 12px; }
+        .nav a:not(.nav-cta) { display: none; }
+        main { padding-left: 16px; padding-right: 16px; }
+        h1 { font-size: 49px; letter-spacing: -2.6px; }
+        .hero-copy { font-size: 14px; }
+        .hero-art { min-height: 205px; }
+        .float-chip.top { right: 0; }
+        .float-chip.bottom { left: 0; }
+        .section { margin-top: 38px; }
+        .section-heading { align-items: start; flex-direction: column; }
         .results { grid-template-columns: 1fr; }
-        .catalog-controls { grid-template-columns: 1fr; }
-        .panel { padding: 22px; }
-        h1 { letter-spacing: -2px; }
+        .catalog-tools { grid-template-columns: 1fr; }
+        .panel { padding: 19px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
       }
     </style>
   </head>
   <body>
-    <header>
-      <div class="brand">SmartShelf<span>AI</span></div>
-      <div class="badge">Personalized picks</div>
+    <a class="skip-link" href="#main">Skip to products</a>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="SmartShelf AI home">SmartShelf<span class="brand-mark">AI</span></a>
+      <nav class="nav" aria-label="Main navigation">
+        <a href="#catalog">Discover</a>
+        <a href="#recommendations">For you</a>
+        <a class="nav-cta" href="#assistant">Ask the assistant <span aria-hidden="true">↗</span></a>
+      </nav>
     </header>
-    <main>
+    <main id="main">
       <section class="hero">
-        <div class="eyebrow">A smarter way to shop</div>
-        <h1>Good finds.<br>More you.</h1>
-        <p class="intro">Choose a few things you love. Our recommendation engine will find products that fit your interests.</p>
-      </section>
-
-      <section class="panel" aria-labelledby="interest-title">
-        <div class="panel-heading">
-          <div>
-            <h2 id="interest-title">What are you into?</h2>
-            <p class="hint">Pick one or more interests to personalize your shelf.</p>
-          </div>
-        </div>
-        <form id="recommendation-form">
-          <div class="interests">
-            <label class="interest"><input type="checkbox" name="interest" value="coffee"><span>☕ Coffee</span></label>
-            <label class="interest"><input type="checkbox" name="interest" value="fitness"><span>🏃 Fitness</span></label>
-            <label class="interest"><input type="checkbox" name="interest" value="technology"><span>🎧 Technology</span></label>
-            <label class="interest"><input type="checkbox" name="interest" value="home"><span>🪴 Home</span></label>
-            <label class="interest"><input type="checkbox" name="interest" value="travel"><span>🧳 Travel</span></label>
-            <label class="interest"><input type="checkbox" name="interest" value="skincare"><span>✨ Skincare</span></label>
-            <label class="interest"><input type="checkbox" name="interest" value="reading"><span>📚 Reading</span></label>
-            <label class="interest"><input type="checkbox" name="interest" value="sustainability"><span>🌱 Sustainability</span></label>
-          </div>
-          <button id="submit-button" type="submit">Show my recommendations</button>
-        </form>
-      </section>
-
-      <section class="panel" aria-labelledby="catalog-title">
         <div>
-          <h2 id="catalog-title">Explore the catalog</h2>
-          <p class="hint">Search products, filter by category, or sort by rating and price.</p>
+          <div class="eyebrow">A little more you, in every find</div>
+          <h1>Good things.<br><em>Good instincts.</em></h1>
+          <p class="hero-copy">Discover useful, feel-good finds picked around what you love. Tell us your interests and let your next favorite find you.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#recommendations">Find my picks <span aria-hidden="true">↓</span></a>
+            <a class="button button-secondary" href="#catalog">Browse the shelf</a>
+          </div>
         </div>
-        <div class="catalog-controls">
-          <input id="search" type="search" placeholder="Search products..." aria-label="Search products">
-          <select id="category-filter" aria-label="Filter by category">
-            <option value="">All categories</option>
-          </select>
+        <div class="hero-art" aria-hidden="true">
+          <div class="orbit"><div class="hero-product"><span class="hero-product-icon">☕</span><strong>little daily joys</strong></div></div>
+          <span class="float-chip top">✦ Thoughtfully picked</span>
+          <span class="float-chip bottom">🌱 Find your kind of good</span>
+        </div>
+      </section>
+
+      <div class="benefits" aria-label="Shopping benefits">
+        <div class="benefit"><span class="benefit-icon">✦</span><div><strong>Picked for your interests</strong><span>Recommendations that feel personal</span></div></div>
+        <div class="benefit"><span class="benefit-icon">⌕</span><div><strong>Easy to explore</strong><span>Search, filter, and sort in a snap</span></div></div>
+        <div class="benefit"><span class="benefit-icon">♡</span><div><strong>Better everyday finds</strong><span>Ratings and popularity at a glance</span></div></div>
+      </div>
+
+      <section class="section" id="recommendations" aria-labelledby="interest-title">
+        <div class="section-heading">
+          <div><div class="section-kicker">Your shelf, your rules</div><h2 id="interest-title">What are you into?</h2><p class="hint">Pick a few interests and we’ll find a good place to start.</p></div>
+        </div>
+        <div class="panel">
+          <form id="recommendation-form">
+            <div class="interests">
+              <label class="interest"><input type="checkbox" name="interest" value="coffee"><span>☕ Coffee</span></label>
+              <label class="interest"><input type="checkbox" name="interest" value="fitness"><span>🏃 Fitness</span></label>
+              <label class="interest"><input type="checkbox" name="interest" value="technology"><span>🎧 Technology</span></label>
+              <label class="interest"><input type="checkbox" name="interest" value="home"><span>🪴 Home</span></label>
+              <label class="interest"><input type="checkbox" name="interest" value="travel"><span>🧳 Travel</span></label>
+              <label class="interest"><input type="checkbox" name="interest" value="skincare"><span>✨ Skincare</span></label>
+              <label class="interest"><input type="checkbox" name="interest" value="reading"><span>📚 Reading</span></label>
+              <label class="interest"><input type="checkbox" name="interest" value="sustainability"><span>🌱 Sustainability</span></label>
+            </div>
+            <button class="button button-primary" id="submit-button" type="submit">Show my recommendations <span aria-hidden="true">→</span></button>
+          </form>
+          <p id="recommendation-status" class="status" aria-live="polite"></p>
+          <div id="recommendation-results" class="results"></div>
+        </div>
+      </section>
+
+      <section class="section" id="catalog" aria-labelledby="catalog-title">
+        <div class="section-heading">
+          <div><div class="section-kicker">The good-find edit</div><h2 id="catalog-title">Explore the shelf</h2><p class="hint">A considered collection for the everyday and the just-because.</p></div>
+          <p id="catalog-status" class="status" aria-live="polite"></p>
+        </div>
+        <div class="catalog-tools">
+          <input id="search" type="search" placeholder="Search finds, categories..." aria-label="Search products">
+          <select id="category-filter" aria-label="Filter by category"><option value="">All categories</option></select>
           <select id="sort-order" aria-label="Sort products">
             <option value="popular">Most popular</option>
             <option value="rating">Top rated</option>
@@ -180,51 +372,77 @@
             <option value="price-high">Price: high to low</option>
           </select>
         </div>
-        <p id="catalog-status" class="status" aria-live="polite"></p>
         <div id="catalog-results" class="results"></div>
       </section>
 
-      <section aria-live="polite" aria-label="Recommendations">
-        <p id="recommendation-status" class="status"></p>
-        <div id="recommendations" class="results"></div>
+      <section class="section assistant" id="assistant" aria-labelledby="assistant-title">
+        <div class="assistant-copy">
+          <div class="section-kicker">A little help goes a long way</div>
+          <h2 id="assistant-title">Meet your shopping sidekick.</h2>
+          <p>Tell the assistant what you’re looking for. It understands interests and simple budgets, then finds a few ideas from the shelf.</p>
+          <p class="prompt">Try “coffee gear under $40” or “something for reading.”</p>
+        </div>
+        <div class="chat-box">
+          <div class="chat-header"><span class="bot-avatar" aria-hidden="true">✦</span><div><strong>Shelf sidekick</strong><small>Here to help you find a good fit</small></div><span class="online-dot" aria-label="Ready"></span></div>
+          <div id="chat-messages" class="chat-messages" role="log" aria-live="polite" aria-label="Shopping assistant conversation"></div>
+          <form id="chat-form" class="chat-form">
+            <label class="skip-link" for="chat-input">Message the shopping assistant</label>
+            <input id="chat-input" class="chat-input" type="text" maxlength="500" placeholder="What are you shopping for?" autocomplete="off" required>
+            <button class="send-button" id="chat-send" type="submit">Send</button>
+          </form>
+        </div>
       </section>
-      <footer>SmartShelf AI blends product-description similarity (65%), customer ratings (20%), and popularity (15%) to rank recommendations. This demo uses sample catalog data and does not store your selections.</footer>
+
+      <footer class="site-footer">
+        <div class="footer-row"><a class="brand" href="#">SmartShelf<span class="brand-mark">AI</span></a><span>Good finds, thoughtfully ranked.</span></div>
+        <p>Recommendations blend product-description similarity (65%), sample customer ratings (20%), and popularity (15%). The shopping assistant is a lightweight demo and does not store your selections or conversation.</p>
+      </footer>
     </main>
     <script>
-      const form = document.querySelector("#recommendation-form");
+      const recommendationForm = document.querySelector("#recommendation-form");
       const recommendationStatus = document.querySelector("#recommendation-status");
-      const recommendations = document.querySelector("#recommendations");
-      const button = document.querySelector("#submit-button");
+      const recommendationResults = document.querySelector("#recommendation-results");
+      const recommendationButton = document.querySelector("#submit-button");
       const search = document.querySelector("#search");
       const categoryFilter = document.querySelector("#category-filter");
       const sortOrder = document.querySelector("#sort-order");
       const catalogStatus = document.querySelector("#catalog-status");
       const catalogResults = document.querySelector("#catalog-results");
-      const labels = {
-        coffee: "Coffee",
-        fitness: "Fitness",
-        technology: "Technology",
-        home: "Home",
-        travel: "Travel",
-        skincare: "Skincare",
-        reading: "Reading",
-        sustainability: "Sustainability",
+      const chatForm = document.querySelector("#chat-form");
+      const chatInput = document.querySelector("#chat-input");
+      const chatSend = document.querySelector("#chat-send");
+      const chatMessages = document.querySelector("#chat-messages");
+      const interestLabels = {
+        coffee: "Coffee", fitness: "Fitness", technology: "Technology", home: "Home",
+        travel: "Travel", skincare: "Skincare", reading: "Reading", sustainability: "Sustainability",
+      };
+      const categoryIcons = {
+        Coffee: "☕", Fitness: "🏃", Technology: "🎧", Home: "🪴", Outdoors: "🌿",
+        Travel: "🧳", Skincare: "✨", Reading: "📚",
       };
 
       function renderProduct(product, showScore = false) {
         const card = document.createElement("article");
         card.className = "card";
-
+        const visual = document.createElement("div");
+        visual.className = "product-visual";
+        visual.setAttribute("aria-hidden", "true");
+        const icon = document.createElement("span");
+        icon.className = "product-emoji";
+        icon.textContent = categoryIcons[product.category] || "✦";
+        visual.append(icon);
+        const content = document.createElement("div");
+        content.className = "card-content";
         const top = document.createElement("div");
         top.className = "card-top";
         const category = document.createElement("span");
         category.className = "category";
         category.textContent = product.category;
         top.append(category);
-        if (showScore) {
+        if (showScore && Number.isFinite(product.score)) {
           const score = document.createElement("span");
           score.className = "score";
-          score.textContent = `${product.score}% smart score`;
+          score.textContent = `${product.score}% match`;
           top.append(score);
         } else if (product.popularity >= 90) {
           const popular = document.createElement("span");
@@ -232,31 +450,39 @@
           popular.textContent = "Popular";
           top.append(popular);
         }
-
         const title = document.createElement("h3");
         title.textContent = product.name;
         const description = document.createElement("p");
+        description.className = "card-description";
         description.textContent = product.description;
         const rating = document.createElement("p");
         rating.className = "rating";
-        rating.textContent = `★ ${product.rating.toFixed(1)} · ${product.reviewCount} reviews`;
+        rating.textContent = `★ ${Number(product.rating || 0).toFixed(1)} · ${product.reviewCount || 0} reviews`;
         const bottom = document.createElement("div");
         bottom.className = "card-bottom";
         const price = document.createElement("span");
         price.className = "price";
-        price.textContent = `$${product.price}`;
+        price.textContent = `$${Number(product.price).toFixed(2).replace(/\.00$/, "")}`;
         const match = document.createElement("span");
         match.className = "match";
         match.textContent = product.matchedInterests?.length
-          ? `Fits: ${product.matchedInterests.map((interest) => labels[interest]).join(", ")}`
-          : `${product.popularity}% popularity`;
+          ? `Fits: ${product.matchedInterests.map((interest) => interestLabels[interest] || interest).join(", ")}`
+          : `${product.popularity || 0}% popular`;
         bottom.append(price, match);
-        card.append(top, title, description, rating, bottom);
+        content.append(top, title, description, rating, bottom);
+        card.append(visual, content);
         return card;
       }
 
+      function showEmpty(container, message) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = message;
+        container.replaceChildren(empty);
+      }
+
       async function loadCatalog() {
-        catalogStatus.textContent = "Loading products…";
+        catalogStatus.textContent = "Finding the good stuff…";
         const params = new URLSearchParams({
           q: search.value,
           category: categoryFilter.value,
@@ -276,11 +502,12 @@
           }
           catalogResults.replaceChildren();
           if (data.products.length === 0) {
-            catalogStatus.textContent = "No products match those filters.";
+            catalogStatus.textContent = "Nothing found just yet";
+            showEmpty(catalogResults, "Try another search or choose a different category.");
             return;
           }
           for (const product of data.products) catalogResults.append(renderProduct(product));
-          catalogStatus.textContent = `${data.products.length} products`;
+          catalogStatus.textContent = `${data.products.length} thoughtful finds`;
         } catch (error) {
           catalogStatus.textContent = error.message || "Something went wrong. Please try again.";
         }
@@ -289,35 +516,77 @@
       let searchTimer;
       search.addEventListener("input", () => {
         clearTimeout(searchTimer);
-        searchTimer = setTimeout(loadCatalog, 200);
+        searchTimer = setTimeout(loadCatalog, 220);
       });
       categoryFilter.addEventListener("change", loadCatalog);
       sortOrder.addEventListener("change", loadCatalog);
       loadCatalog();
 
-      form.addEventListener("submit", async (event) => {
+      recommendationForm.addEventListener("submit", async (event) => {
         event.preventDefault();
-        const selected = [...form.querySelectorAll('input[name="interest"]:checked')].map((input) => input.value);
-        recommendations.replaceChildren();
+        const selected = [...recommendationForm.querySelectorAll('input[name="interest"]:checked')]
+          .map((input) => input.value);
+        recommendationResults.replaceChildren();
         if (selected.length === 0) {
           recommendationStatus.textContent = "Choose at least one interest to get started.";
           return;
         }
-
-        button.disabled = true;
+        recommendationButton.disabled = true;
         recommendationStatus.textContent = "Finding your best matches…";
         try {
           const response = await fetch(`/api/recommendations?interests=${encodeURIComponent(selected.join(","))}`);
           const data = await response.json();
           if (!response.ok) throw new Error(data.error || "Recommendations could not be loaded.");
-          for (const product of data.recommendations) {
-            recommendations.append(renderProduct(product, true));
-          }
-          recommendationStatus.textContent = "Your top matches, ranked by interests, ratings, and popularity.";
+          for (const product of data.recommendations) recommendationResults.append(renderProduct(product, true));
+          recommendationStatus.textContent = "Picked around your interests, ratings, and popularity.";
         } catch (error) {
           recommendationStatus.textContent = error.message || "Something went wrong. Please try again.";
         } finally {
-          button.disabled = false;
+          recommendationButton.disabled = false;
+        }
+      });
+
+      function addMessage(text, sender) {
+        const message = document.createElement("div");
+        message.className = `message ${sender}`;
+        message.textContent = text;
+        chatMessages.append(message);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+      addMessage("Hi! Tell me what you’re shopping for—like coffee gear under $40 or something for reading.", "assistant");
+
+      chatForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const message = chatInput.value.trim();
+        if (!message) return;
+        addMessage(message, "user");
+        chatInput.value = "";
+        chatInput.disabled = true;
+        chatSend.disabled = true;
+        addMessage("Let me look around the shelf…", "assistant");
+        const pending = chatMessages.lastElementChild;
+        try {
+          const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message }),
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || "The assistant is unavailable.");
+          pending.textContent = data.reply;
+          if (data.products.length > 0) {
+            const products = document.createElement("div");
+            products.className = "chat-products";
+            for (const product of data.products) products.append(renderProduct(product, true));
+            chatMessages.append(products);
+          }
+        } catch (error) {
+          pending.textContent = error.message || "Something went wrong. Please try again.";
+        } finally {
+          chatInput.disabled = false;
+          chatSend.disabled = false;
+          chatInput.focus();
+          chatMessages.scrollTop = chatMessages.scrollHeight;
         }
       });
     </script>

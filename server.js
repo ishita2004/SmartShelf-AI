@@ -8,6 +8,7 @@ const ports = {
   search: 3002,
   recommendations: 3003,
   reviews: 3004,
+  chatbot: 3005,
 };
 const baseUrl = (port) => `http://127.0.0.1:${port}`;
 const services = [
@@ -40,12 +41,21 @@ const services = [
     },
   },
   {
+    name: "chatbot",
+    port: ports.chatbot,
+    file: "services/chatbot/server.js",
+    env: {
+      RECOMMENDATIONS_URL: baseUrl(ports.recommendations),
+    },
+  },
+  {
     name: "storefront",
     port: ports.storefront,
     file: "services/storefront/server.js",
     env: {
       SEARCH_URL: baseUrl(ports.search),
       RECOMMENDATIONS_URL: baseUrl(ports.recommendations),
+      CHATBOT_URL: baseUrl(ports.chatbot),
     },
   },
 ];

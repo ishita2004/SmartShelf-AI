@@ -1,16 +1,31 @@
 # SmartShelf AI microservices
 
-SmartShelf is a retail recommendation application made of five independently deployable Node.js microservices:
+SmartShelf is a retail recommendation application made of six independently deployable Node.js microservices:
 
 1. **Storefront** serves the browser UI and routes browser API requests.
 2. **Catalog** owns product descriptions, prices, tags, and categories in **PostgreSQL**.
 3. **Search** combines catalog products with review metrics and searches, filters, and sorts them.
 4. **Recommendations** combines catalog and review data and ranks products using text similarity (TF-IDF and cosine similarity, 65%), ratings (20%), and popularity (15%).
 5. **Reviews** stores sample ratings, review counts, and popularity metrics in **MongoDB**.
+6. **Chatbot** provides a lightweight shopping assistant that recognizes supported interests and budget limits, then gets product suggestions from Recommendations.
 
 The two databases are separate dependencies of the Catalog and Reviews services. The other services use their HTTP APIs. Initial sample records are inserted when the services first start with empty tables/collections. The scores are a lightweight recommendation algorithm, not a trained model; review data is sample data, not live customer reviews.
 
-## Run locally
+The storefront includes personalized recommendations, catalog search and filters, and a shopping assistant. The assistant is rule-based, does not require an API key, and does not store messages.
+
+## Run locally with Docker Compose
+
+Docker Compose starts the storefront, catalog, search, recommendations, reviews, chatbot, PostgreSQL, and MongoDB. Database storage uses local Docker volumes. Copy `.env.example` to `.env`, set unique database passwords, then run:
+
+```powershell
+Copy-Item .env.example .env
+docker compose up --build -d
+docker compose ps
+```
+
+Open [http://localhost:3000](http://localhost:3000). Stop the services with `docker compose down`; the named database volumes are preserved. To permanently delete their local data as well, run `docker compose down -v`.
+
+## Run services directly with Node.js
 
 Requires Node.js 20 or newer, PostgreSQL, and MongoDB running locally. No Docker Desktop is required to run the Node services, but both databases must be available first. By default, the app expects:
 
@@ -49,6 +64,7 @@ The launcher starts all five services. Open the storefront at [http://localhost:
 | Search | 3002 | http://localhost:3002/api/search |
 | Recommendations | 3003 | http://localhost:3003/api/recommendations?interests=coffee |
 | Reviews | 3004 | http://localhost:3004/api/reviews |
+| Chatbot | 3005 | http://localhost:3005/api/chat (POST) |
 
 ## Test
 
@@ -72,6 +88,7 @@ az acr build --registry $ACR_NAME --image smartshelf-catalog:v1 --file services/
 az acr build --registry $ACR_NAME --image smartshelf-search:v1 --file services/search/Dockerfile .
 az acr build --registry $ACR_NAME --image smartshelf-recommendations:v1 --file services/recommendations/Dockerfile .
 az acr build --registry $ACR_NAME --image smartshelf-reviews:v1 --file services/reviews/Dockerfile .
+az acr build --registry $ACR_NAME --image smartshelf-chatbot:v1 --file services/chatbot/Dockerfile .
 ```
 
 Each command builds and pushes one image. Replace `YOUR_ACR_NAME` in `k8s/Deployment.yaml` with the actual registry name.
@@ -105,7 +122,7 @@ az aks get-credentials --resource-group $RESOURCE_GROUP --name $AKS_NAME
 kubectl get nodes
 ```
 
-Build all five images in ACR, update the registry name in `k8s/Deployment.yaml`, then deploy the application:
+Build all six images in ACR, update the registry name in `k8s/Deployment.yaml`, then deploy the application:
 
 ```powershell
 kubectl apply -f k8s/Deployment.yaml

@@ -43,6 +43,19 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  name: smartshelf-chatbot
+spec:
+  type: ClusterIP
+  selector:
+    app: smartshelf-chatbot
+  ports:
+    - name: http
+      port: 3005
+      targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
   name: smartshelf-catalog
 spec:
   type: ClusterIP

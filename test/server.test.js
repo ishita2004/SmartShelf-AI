@@ -7,6 +7,7 @@ const {
   seedProducts,
 } = require("../services/catalog/server");
 const { createServer: createRecommendationsServer } = require("../services/recommendations/server");
+const { createServer: createChatbotServer } = require("../services/chatbot/server");
 const {
   createServer: createReviewsServer,
   initializeDatabase: initializeReviewsDatabase,
@@ -40,9 +41,13 @@ before(async () => {
     catalogUrl: addresses.catalog,
     reviewsUrl: addresses.reviews,
   }));
+  await startServer("chatbot", createChatbotServer({
+    recommendationsUrl: addresses.recommendations,
+  }));
   await startServer("storefront", createStorefrontServer({
     searchUrl: addresses.search,
     recommendationsUrl: addresses.recommendations,
+    chatbotUrl: addresses.chatbot,
   }));
 });
 
@@ -52,8 +57,8 @@ after(async () => {
   })));
 });
 
-test("all five services expose health endpoints", async () => {
-  for (const service of ["catalog", "reviews", "search", "recommendations", "storefront"]) {
+test("all six services expose health endpoints", async () => {
+  for (const service of ["catalog", "reviews", "search", "recommendations", "chatbot", "storefront"]) {
     const response = await fetch(`${addresses[service]}/health`);
     const data = await response.json();
     assert.equal(response.status, 200);
@@ -66,8 +71,9 @@ test("storefront serves the shopping page", async () => {
   const page = await response.text();
 
   assert.equal(response.status, 200);
-  assert.match(page, /Explore the catalog/);
+  assert.match(page, /Explore the shelf/);
   assert.match(page, /recommendation-form/);
+  assert.match(page, /shopping sidekick/);
 });
 
 test("catalog returns products and categories", async () => {
@@ -106,6 +112,40 @@ test("storefront recommendations return hybrid-scored products", async () => {
   assert.equal(data.recommendations.length, 3);
   assert.equal(data.recommendations[0].id, "pour-over-kit");
   assert.ok(data.recommendations.every((product) => product.rating && product.reviewCount && product.score));
+});
+
+test("shopping assistant returns relevant products within the requested budget", async () => {
+  const response = await fetch(`${addresses.storefront}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: "Recommend coffee gear under $40" }),
+  });
+  const data = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.match(data.reply, /coffee/);
+  assert.equal(data.products.length, 1);
+  assert.equal(data.products[0].id, "pour-over-kit");
+  assert.ok(data.products[0].price <= 40);
+});
+
+test("shopping assistant handles greetings and rejects invalid requests", async () => {
+  const greeting = await fetch(`${addresses.storefront}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: "hello" }),
+  });
+  const invalid = await fetch(`${addresses.storefront}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: "" }),
+  });
+  const data = await greeting.json();
+
+  assert.equal(greeting.status, 200);
+  assert.match(data.reply, /Tell me what you’re shopping for/);
+  assert.deepEqual(data.products, []);
+  assert.equal(invalid.status, 400);
 });
 
 test("invalid interests and catalog filters are rejected", async () => {
