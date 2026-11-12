@@ -1,8 +1,9 @@
 const http = require("node:http");
+const { Pool } = require("pg");
 const { sendJson } = require("../shared/http");
 
 const PORT = Number(process.env.PORT) || 3001;
-const products = [
+const seedProducts = [
   {
     id: "pour-over-kit",
     name: "Pour-over Coffee Starter Kit",
@@ -69,8 +70,63 @@ const products = [
   },
 ];
 
-function createServer() {
-  return http.createServer((request, response) => {
+const pool = new Pool({
+  host: process.env.PGHOST || "127.0.0.1",
+  port: Number(process.env.PGPORT) || 5432,
+  database: process.env.PGDATABASE || "smartshelf",
+  user: process.env.PGUSER || "smartshelf",
+  password: process.env.PGPASSWORD || "smartshelf-dev-password",
+  connectionTimeoutMillis: 5000,
+});
+
+async function initializeDatabase(database = pool) {
+  await database.query(`
+    CREATE TABLE IF NOT EXISTS products (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      category TEXT NOT NULL,
+      price NUMERIC(10, 2) NOT NULL CHECK (price >= 0),
+      description TEXT NOT NULL,
+      tags JSONB NOT NULL DEFAULT '[]'::jsonb
+    )
+  `);
+
+  for (const product of seedProducts) {
+    await database.query(
+      `INSERT INTO products (id, name, category, price, description, tags)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (id) DO NOTHING`,
+      [product.id, product.name, product.category, product.price, product.description, JSON.stringify(product.tags)],
+    );
+  }
+}
+
+async function listProducts(database = pool) {
+  const { rows } = await database.query(
+    "SELECT id, name, category, price, description, tags FROM products ORDER BY name",
+  );
+  return rows.map((row) => ({ ...row, price: Number(row.price) }));
+}
+
+async function connectWithRetry(connect, attempts = 30) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      await connect();
+      return;
+    } catch (error) {
+      lastError = error;
+      if (attempt < attempts) {
+        console.error(`PostgreSQL unavailable (attempt ${attempt}/${attempts}): ${error.message}`);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+    }
+  }
+  throw new Error(`Could not connect to PostgreSQL after ${attempts} attempts: ${lastError.message}`);
+}
+
+function createServer({ loadProducts = listProducts } = {}) {
+  return http.createServer(async (request, response) => {
     const url = new URL(request.url, `http://${request.headers.host ?? "localhost"}`);
 
     if (request.method === "GET" && url.pathname === "/health") {
@@ -78,10 +134,16 @@ function createServer() {
       return;
     }
     if (request.method === "GET" && url.pathname === "/api/products") {
-      sendJson(response, 200, {
-        products,
-        categories: [...new Set(products.map((product) => product.category))].sort(),
-      });
+      try {
+        const products = await loadProducts();
+        sendJson(response, 200, {
+          products,
+          categories: [...new Set(products.map((product) => product.category))].sort(),
+        });
+      } catch (error) {
+        console.error(`Catalog database query failed: ${error.message}`);
+        sendJson(response, 503, { error: "Product catalog is temporarily unavailable." });
+      }
       return;
     }
     sendJson(response, 404, { error: "Not found." });
@@ -89,7 +151,15 @@ function createServer() {
 }
 
 if (require.main === module) {
-  createServer().listen(PORT, "0.0.0.0", () => console.log(`Catalog service listening on port ${PORT}`));
+  connectWithRetry(() => pool.connect().then((client) => client.release()))
+    .then(() => initializeDatabase())
+    .then(() => {
+      createServer().listen(PORT, "0.0.0.0", () => console.log(`Catalog service listening on port ${PORT}`));
+    })
+    .catch((error) => {
+      console.error(error.message);
+      process.exitCode = 1;
+    });
 }
 
-module.exports = { createServer, products };
+module.exports = { connectWithRetry, createServer, initializeDatabase, listProducts, seedProducts };

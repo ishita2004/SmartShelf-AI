@@ -75,6 +75,23 @@ spec:
           ports:
             - name: http
               containerPort: 3001
+          env:
+            - name: PGHOST
+              value: smartshelf-postgres
+            - name: PGPORT
+              value: "5432"
+            - name: PGDATABASE
+              value: smartshelf
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: smartshelf-db-secrets
+                  key: POSTGRES_USER
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartshelf-db-secrets
+                  key: POSTGRES_PASSWORD
           readinessProbe:
             httpGet:
               path: /health
@@ -232,6 +249,23 @@ spec:
           ports:
             - name: http
               containerPort: 3004
+          env:
+            - name: MONGO_HOST
+              value: smartshelf-mongodb
+            - name: MONGO_PORT
+              value: "27017"
+            - name: MONGO_AUTH_SOURCE
+              value: admin
+            - name: MONGO_USER
+              valueFrom:
+                secretKeyRef:
+                  name: smartshelf-db-secrets
+                  key: MONGO_USER
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartshelf-db-secrets
+                  key: MONGO_PASSWORD
           readinessProbe:
             httpGet:
               path: /health

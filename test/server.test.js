@@ -1,8 +1,18 @@
 const assert = require("node:assert/strict");
 const { after, before, test } = require("node:test");
-const { createServer: createCatalogServer } = require("../services/catalog/server");
+const {
+  createServer: createCatalogServer,
+  initializeDatabase: initializeCatalogDatabase,
+  listProducts,
+  seedProducts,
+} = require("../services/catalog/server");
 const { createServer: createRecommendationsServer } = require("../services/recommendations/server");
-const { createServer: createReviewsServer } = require("../services/reviews/server");
+const {
+  createServer: createReviewsServer,
+  initializeDatabase: initializeReviewsDatabase,
+  listReviews,
+  seedReviews,
+} = require("../services/reviews/server");
 const { createServer: createSearchServer } = require("../services/search/server");
 const { createServer: createStorefrontServer } = require("../services/storefront/server");
 
@@ -19,8 +29,9 @@ async function startServer(name, server) {
 }
 
 before(async () => {
-  await startServer("catalog", createCatalogServer());
-  await startServer("reviews", createReviewsServer());
+  await startServer("catalog", createCatalogServer({ loadProducts: async () => seedProducts }));
+  await startServer("reviews", createReviewsServer({ loadReviews: async (productId) =>
+    productId ? seedReviews.filter((review) => review.productId === productId) : seedReviews }));
   await startServer("search", createSearchServer({
     catalogUrl: addresses.catalog,
     reviewsUrl: addresses.reviews,
@@ -103,4 +114,56 @@ test("invalid interests and catalog filters are rejected", async () => {
 
   assert.equal(badInterest.status, 400);
   assert.equal(badSort.status, 400);
+});
+
+test("catalog initializes PostgreSQL schema and inserts sample rows without overwriting existing products", async () => {
+  const statements = [];
+  await initializeCatalogDatabase({
+    query: async (sql, values) => statements.push({ sql, values }),
+  });
+
+  assert.match(statements[0].sql, /CREATE TABLE IF NOT EXISTS products/);
+  assert.equal(statements.length, seedProducts.length + 1);
+  assert.ok(statements.slice(1).every(({ sql }) => /ON CONFLICT \(id\) DO NOTHING/.test(sql)));
+  assert.equal(JSON.parse(statements[1].values[5])[0], seedProducts[0].tags[0]);
+});
+
+test("catalog converts PostgreSQL numeric prices to JSON-friendly numbers", async () => {
+  const products = await listProducts({
+    query: async () => ({ rows: [{ id: "reading-light", price: "19.00" }] }),
+  });
+
+  assert.equal(products[0].price, 19);
+});
+
+test("reviews initializes its MongoDB index and seeds only an empty collection", async () => {
+  let inserted;
+  const collection = {
+    createIndex: async (keys, options) => {
+      assert.deepEqual(keys, { productId: 1 });
+      assert.equal(options.unique, true);
+    },
+    countDocuments: async () => 0,
+    insertMany: async (documents) => { inserted = documents; },
+  };
+  await initializeReviewsDatabase(collection);
+
+  assert.equal(inserted.length, seedReviews.length);
+});
+
+test("reviews queries MongoDB by product and excludes its internal ID", async () => {
+  let query;
+  let options;
+  const expected = [{ productId: "skin-calm-kit", rating: 4.9 }];
+  const collection = {
+    find: (filter, projection) => {
+      query = filter;
+      options = projection;
+      return { toArray: async () => expected };
+    },
+  };
+
+  assert.equal(await listReviews("skin-calm-kit", collection), expected);
+  assert.deepEqual(query, { productId: "skin-calm-kit" });
+  assert.deepEqual(options, { projection: { _id: 0 } });
 });
