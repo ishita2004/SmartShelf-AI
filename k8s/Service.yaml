@@ -1,15 +1,67 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: smartshelf-ai
+  name: smartshelf-storefront
   labels:
-    app: smartshelf-ai
+    app: smartshelf-storefront
 spec:
   type: LoadBalancer
   selector:
-    app: smartshelf-ai
+    app: smartshelf-storefront
   ports:
     - name: http
       port: 80
       targetPort: http
       protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smartshelf-catalog
+spec:
+  type: ClusterIP
+  selector:
+    app: smartshelf-catalog
+  ports:
+    - name: http
+      port: 3001
+      targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smartshelf-search
+spec:
+  type: ClusterIP
+  selector:
+    app: smartshelf-search
+  ports:
+    - name: http
+      port: 3002
+      targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smartshelf-recommendations
+spec:
+  type: ClusterIP
+  selector:
+    app: smartshelf-recommendations
+  ports:
+    - name: http
+      port: 3003
+      targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smartshelf-reviews
+spec:
+  type: ClusterIP
+  selector:
+    app: smartshelf-reviews
+  ports:
+    - name: http
+      port: 3004
+      targetPort: http

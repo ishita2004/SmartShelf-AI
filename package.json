@@ -5,7 +5,7 @@
   "description": "A lightweight retail product recommendation app",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js",
+    "check": "node --check server.js && node --check services/shared/http.js && node --check services/catalog/server.js && node --check services/search/server.js && node --check services/recommendations/server.js && node --check services/reviews/server.js && node --check services/storefront/server.js",
     "test": "node --test"
   },
   "engines": {

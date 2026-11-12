@@ -1,29 +1,57 @@
 const assert = require("node:assert/strict");
 const { after, before, test } = require("node:test");
-const { createServer } = require("../server");
+const { createServer: createCatalogServer } = require("../services/catalog/server");
+const { createServer: createRecommendationsServer } = require("../services/recommendations/server");
+const { createServer: createReviewsServer } = require("../services/reviews/server");
+const { createServer: createSearchServer } = require("../services/search/server");
+const { createServer: createStorefrontServer } = require("../services/storefront/server");
 
-const server = createServer();
-let baseUrl;
+const servers = [];
+const addresses = {};
+
+async function startServer(name, server) {
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  servers.push(server);
+  addresses[name] = `http://127.0.0.1:${server.address().port}`;
+}
 
 before(async () => {
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  baseUrl = `http://127.0.0.1:${server.address().port}`;
+  await startServer("catalog", createCatalogServer());
+  await startServer("reviews", createReviewsServer());
+  await startServer("search", createSearchServer({
+    catalogUrl: addresses.catalog,
+    reviewsUrl: addresses.reviews,
+  }));
+  await startServer("recommendations", createRecommendationsServer({
+    catalogUrl: addresses.catalog,
+    reviewsUrl: addresses.reviews,
+  }));
+  await startServer("storefront", createStorefrontServer({
+    searchUrl: addresses.search,
+    recommendationsUrl: addresses.recommendations,
+  }));
 });
 
 after(async () => {
-  await new Promise((resolve, reject) => {
+  await Promise.all(servers.map((server) => new Promise((resolve, reject) => {
     server.close((error) => (error ? reject(error) : resolve()));
-  });
+  })));
 });
 
-test("health endpoint reports the app is ready", async () => {
-  const response = await fetch(`${baseUrl}/health`);
-  assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { status: "ok" });
+test("all five services expose health endpoints", async () => {
+  for (const service of ["catalog", "reviews", "search", "recommendations", "storefront"]) {
+    const response = await fetch(`${addresses[service]}/health`);
+    const data = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(data.status, "ok");
+  }
 });
 
-test("home page contains the catalog and recommendation controls", async () => {
-  const response = await fetch(baseUrl);
+test("storefront serves the shopping page", async () => {
+  const response = await fetch(addresses.storefront);
   const page = await response.text();
 
   assert.equal(response.status, 200);
@@ -31,8 +59,36 @@ test("home page contains the catalog and recommendation controls", async () => {
   assert.match(page, /recommendation-form/);
 });
 
-test("recommendations combine interests with product ratings and popularity", async () => {
-  const response = await fetch(`${baseUrl}/api/recommendations?interests=coffee`);
+test("catalog returns products and categories", async () => {
+  const response = await fetch(`${addresses.catalog}/api/products`);
+  const data = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(data.products.length, 8);
+  assert.ok(data.categories.includes("Home"));
+});
+
+test("reviews service returns sample product ratings", async () => {
+  const response = await fetch(`${addresses.reviews}/api/reviews?productId=skin-calm-kit`);
+  const data = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(data.reviews.length, 1);
+  assert.equal(data.reviews[0].rating, 4.9);
+});
+
+test("storefront search combines catalog and reviews data", async () => {
+  const response = await fetch(`${addresses.storefront}/api/products?q=plant&category=Home&sort=rating`);
+  const data = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(data.products.length, 1);
+  assert.equal(data.products[0].id, "plant-care-set");
+  assert.equal(data.products[0].rating, 4.4);
+});
+
+test("storefront recommendations return hybrid-scored products", async () => {
+  const response = await fetch(`${addresses.storefront}/api/recommendations?interests=coffee`);
   const data = await response.json();
 
   assert.equal(response.status, 200);
@@ -41,25 +97,10 @@ test("recommendations combine interests with product ratings and popularity", as
   assert.ok(data.recommendations.every((product) => product.rating && product.reviewCount && product.score));
 });
 
-test("recommendations require a valid interest", async () => {
-  const response = await fetch(`${baseUrl}/api/recommendations?interests=unknown`);
-  assert.equal(response.status, 400);
-});
+test("invalid interests and catalog filters are rejected", async () => {
+  const badInterest = await fetch(`${addresses.storefront}/api/recommendations?interests=unknown`);
+  const badSort = await fetch(`${addresses.storefront}/api/products?sort=random`);
 
-test("catalog supports search, category filtering, and sorting", async () => {
-  const response = await fetch(`${baseUrl}/api/products?q=plant&category=Home&sort=price-low`);
-  const data = await response.json();
-
-  assert.equal(response.status, 200);
-  assert.equal(data.products.length, 1);
-  assert.equal(data.products[0].id, "plant-care-set");
-  assert.ok(data.categories.includes("Home"));
-});
-
-test("catalog rejects invalid filters", async () => {
-  const badCategory = await fetch(`${baseUrl}/api/products?category=Unknown`);
-  const badSort = await fetch(`${baseUrl}/api/products?sort=random`);
-
-  assert.equal(badCategory.status, 400);
+  assert.equal(badInterest.status, 400);
   assert.equal(badSort.status, 400);
 });

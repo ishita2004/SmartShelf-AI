@@ -1,37 +1,246 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: smartshelf-ai
+  name: smartshelf-storefront
   labels:
-    app: smartshelf-ai
+    app: smartshelf-storefront
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: smartshelf-ai
+      app: smartshelf-storefront
   template:
     metadata:
       labels:
-        app: smartshelf-ai
+        app: smartshelf-storefront
     spec:
       containers:
-        - name: smartshelf-ai
-          image: smartshelf-ai:latest
+        - name: storefront
+          image: YOUR_ACR_NAME.azurecr.io/smartshelf-storefront:v1
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: 3000
+          env:
+            - name: SEARCH_URL
+              value: http://smartshelf-search:3002
+            - name: RECOMMENDATIONS_URL
+              value: http://smartshelf-recommendations:3003
           readinessProbe:
             httpGet:
               path: /health
               port: http
-            initialDelaySeconds: 2
             periodSeconds: 5
           livenessProbe:
             httpGet:
               path: /health
               port: http
-            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smartshelf-catalog
+  labels:
+    app: smartshelf-catalog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smartshelf-catalog
+  template:
+    metadata:
+      labels:
+        app: smartshelf-catalog
+    spec:
+      containers:
+        - name: catalog
+          image: YOUR_ACR_NAME.azurecr.io/smartshelf-catalog:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3001
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smartshelf-search
+  labels:
+    app: smartshelf-search
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smartshelf-search
+  template:
+    metadata:
+      labels:
+        app: smartshelf-search
+    spec:
+      containers:
+        - name: search
+          image: YOUR_ACR_NAME.azurecr.io/smartshelf-search:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3002
+          env:
+            - name: CATALOG_URL
+              value: http://smartshelf-catalog:3001
+            - name: REVIEWS_URL
+              value: http://smartshelf-reviews:3004
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smartshelf-recommendations
+  labels:
+    app: smartshelf-recommendations
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smartshelf-recommendations
+  template:
+    metadata:
+      labels:
+        app: smartshelf-recommendations
+    spec:
+      containers:
+        - name: recommendations
+          image: YOUR_ACR_NAME.azurecr.io/smartshelf-recommendations:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3003
+          env:
+            - name: CATALOG_URL
+              value: http://smartshelf-catalog:3001
+            - name: REVIEWS_URL
+              value: http://smartshelf-reviews:3004
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smartshelf-reviews
+  labels:
+    app: smartshelf-reviews
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smartshelf-reviews
+  template:
+    metadata:
+      labels:
+        app: smartshelf-reviews
+    spec:
+      containers:
+        - name: reviews
+          image: YOUR_ACR_NAME.azurecr.io/smartshelf-reviews:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3004
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
             periodSeconds: 10
           resources:
             requests:
