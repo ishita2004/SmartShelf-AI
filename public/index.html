@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f4ef">
+    <title>SmartShelf AI — Finds for you</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1d2b24;
+        --muted: #64736a;
+        --green: #245c43;
+        --green-dark: #194733;
+        --paper: #f5f4ef;
+        --white: #fff;
+        --line: #e4e6df;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      header {
+        align-items: center;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        padding: 20px max(24px, calc((100% - 1120px) / 2));
+      }
+      .brand { font-size: 19px; font-weight: 800; letter-spacing: -0.6px; }
+      .brand span { color: var(--green); }
+      .badge {
+        background: #e6eee8;
+        border-radius: 999px;
+        color: var(--green-dark);
+        font-size: 12px;
+        font-weight: 700;
+        padding: 8px 12px;
+      }
+      main { margin: 0 auto; max-width: 1120px; padding: 54px 24px 72px; }
+      .hero { max-width: 680px; }
+      .eyebrow {
+        color: var(--green);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 1.6px;
+        text-transform: uppercase;
+      }
+      h1 {
+        font-size: clamp(38px, 7vw, 66px);
+        letter-spacing: -3.4px;
+        line-height: 1.04;
+        margin: 14px 0;
+      }
+      .intro { color: var(--muted); font-size: 17px; line-height: 1.7; margin: 0; }
+      .panel {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        margin-top: 36px;
+        padding: 28px;
+      }
+      .panel-heading { align-items: end; display: flex; justify-content: space-between; gap: 20px; }
+      h2 { font-size: 19px; letter-spacing: -0.4px; margin: 0; }
+      .hint { color: var(--muted); font-size: 13px; margin: 7px 0 0; }
+      .interests { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0; }
+      .interest { cursor: pointer; position: relative; }
+      .interest input { height: 1px; opacity: 0; position: absolute; width: 1px; }
+      .interest span {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: #48574e;
+        display: block;
+        font-size: 14px;
+        padding: 10px 15px;
+        transition: background .15s, border-color .15s, color .15s;
+      }
+      .interest input:checked + span { background: var(--green); border-color: var(--green); color: white; }
+      .interest input:focus-visible + span { outline: 3px solid #a9cdb6; outline-offset: 2px; }
+      button {
+        background: var(--green);
+        border: 0;
+        border-radius: 10px;
+        color: white;
+        cursor: pointer;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        padding: 13px 18px;
+      }
+      button:hover { background: var(--green-dark); }
+      button:disabled { cursor: wait; opacity: .65; }
+      .status { color: var(--muted); font-size: 14px; min-height: 22px; }
+      .results { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 20px; }
+      .card { background: var(--white); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+      .card-top { align-items: start; display: flex; justify-content: space-between; gap: 12px; }
+      .category { color: var(--green); font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+      .score { background: #eaf2ec; border-radius: 999px; color: var(--green-dark); font-size: 11px; font-weight: 800; padding: 6px 9px; white-space: nowrap; }
+      .popular { background: #f3efe1; border-radius: 999px; color: #70591a; font-size: 11px; font-weight: 800; padding: 6px 9px; white-space: nowrap; }
+      .card h3 { font-size: 17px; letter-spacing: -.3px; margin: 13px 0 8px; }
+      .card p { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 0; }
+      .rating { color: #80621b !important; font-size: 12px !important; margin-top: 12px !important; }
+      .card-bottom { align-items: center; border-top: 1px solid var(--line); display: flex; justify-content: space-between; margin-top: 18px; padding-top: 14px; }
+      .price { font-size: 16px; font-weight: 800; }
+      .match { color: var(--muted); font-size: 11px; text-align: right; }
+      .catalog-controls { display: grid; gap: 12px; grid-template-columns: 2fr 1fr 1fr; margin-top: 20px; }
+      .catalog-controls input, .catalog-controls select {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--ink);
+        font: inherit;
+        font-size: 14px;
+        min-width: 0;
+        padding: 12px;
+      }
+      .empty { color: var(--muted); grid-column: 1 / -1; padding: 10px 0; }
+      footer { color: var(--muted); font-size: 12px; line-height: 1.6; margin-top: 28px; }
+      @media (max-width: 760px) {
+        main { padding-top: 38px; }
+        .results { grid-template-columns: 1fr; }
+        .catalog-controls { grid-template-columns: 1fr; }
+        .panel { padding: 22px; }
+        h1 { letter-spacing: -2px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">SmartShelf<span>AI</span></div>
+      <div class="badge">Personalized picks</div>
+    </header>
+    <main>
+      <section class="hero">
+        <div class="eyebrow">A smarter way to shop</div>
+        <h1>Good finds.<br>More you.</h1>
+        <p class="intro">Choose a few things you love. Our recommendation engine will find products that fit your interests.</p>
+      </section>
+
+      <section class="panel" aria-labelledby="interest-title">
+        <div class="panel-heading">
+          <div>
+            <h2 id="interest-title">What are you into?</h2>
+            <p class="hint">Pick one or more interests to personalize your shelf.</p>
+          </div>
+        </div>
+        <form id="recommendation-form">
+          <div class="interests">
+            <label class="interest"><input type="checkbox" name="interest" value="coffee"><span>☕ Coffee</span></label>
+            <label class="interest"><input type="checkbox" name="interest" value="fitness"><span>🏃 Fitness</span></label>
+            <label class="interest"><input type="checkbox" name="interest" value="technology"><span>🎧 Technology</span></label>
+            <label class="interest"><input type="checkbox" name="interest" value="home"><span>🪴 Home</span></label>
+            <label class="interest"><input type="checkbox" name="interest" value="travel"><span>🧳 Travel</span></label>
+            <label class="interest"><input type="checkbox" name="interest" value="skincare"><span>✨ Skincare</span></label>
+            <label class="interest"><input type="checkbox" name="interest" value="reading"><span>📚 Reading</span></label>
+            <label class="interest"><input type="checkbox" name="interest" value="sustainability"><span>🌱 Sustainability</span></label>
+          </div>
+          <button id="submit-button" type="submit">Show my recommendations</button>
+        </form>
+      </section>
+
+      <section class="panel" aria-labelledby="catalog-title">
+        <div>
+          <h2 id="catalog-title">Explore the catalog</h2>
+          <p class="hint">Search products, filter by category, or sort by rating and price.</p>
+        </div>
+        <div class="catalog-controls">
+          <input id="search" type="search" placeholder="Search products..." aria-label="Search products">
+          <select id="category-filter" aria-label="Filter by category">
+            <option value="">All categories</option>
+          </select>
+          <select id="sort-order" aria-label="Sort products">
+            <option value="popular">Most popular</option>
+            <option value="rating">Top rated</option>
+            <option value="price-low">Price: low to high</option>
+            <option value="price-high">Price: high to low</option>
+          </select>
+        </div>
+        <p id="catalog-status" class="status" aria-live="polite"></p>
+        <div id="catalog-results" class="results"></div>
+      </section>
+
+      <section aria-live="polite" aria-label="Recommendations">
+        <p id="recommendation-status" class="status"></p>
+        <div id="recommendations" class="results"></div>
+      </section>
+      <footer>SmartShelf AI blends product-description similarity (65%), customer ratings (20%), and popularity (15%) to rank recommendations. This demo uses sample catalog data and does not store your selections.</footer>
+    </main>
+    <script>
+      const form = document.querySelector("#recommendation-form");
+      const recommendationStatus = document.querySelector("#recommendation-status");
+      const recommendations = document.querySelector("#recommendations");
+      const button = document.querySelector("#submit-button");
+      const search = document.querySelector("#search");
+      const categoryFilter = document.querySelector("#category-filter");
+      const sortOrder = document.querySelector("#sort-order");
+      const catalogStatus = document.querySelector("#catalog-status");
+      const catalogResults = document.querySelector("#catalog-results");
+      const labels = {
+        coffee: "Coffee",
+        fitness: "Fitness",
+        technology: "Technology",
+        home: "Home",
+        travel: "Travel",
+        skincare: "Skincare",
+        reading: "Reading",
+        sustainability: "Sustainability",
+      };
+
+      function renderProduct(product, showScore = false) {
+        const card = document.createElement("article");
+        card.className = "card";
+
+        const top = document.createElement("div");
+        top.className = "card-top";
+        const category = document.createElement("span");
+        category.className = "category";
+        category.textContent = product.category;
+        top.append(category);
+        if (showScore) {
+          const score = document.createElement("span");
+          score.className = "score";
+          score.textContent = `${product.score}% smart score`;
+          top.append(score);
+        } else if (product.popularity >= 90) {
+          const popular = document.createElement("span");
+          popular.className = "popular";
+          popular.textContent = "Popular";
+          top.append(popular);
+        }
+
+        const title = document.createElement("h3");
+        title.textContent = product.name;
+        const description = document.createElement("p");
+        description.textContent = product.description;
+        const rating = document.createElement("p");
+        rating.className = "rating";
+        rating.textContent = `★ ${product.rating.toFixed(1)} · ${product.reviewCount} reviews`;
+        const bottom = document.createElement("div");
+        bottom.className = "card-bottom";
+        const price = document.createElement("span");
+        price.className = "price";
+        price.textContent = `$${product.price}`;
+        const match = document.createElement("span");
+        match.className = "match";
+        match.textContent = product.matchedInterests?.length
+          ? `Fits: ${product.matchedInterests.map((interest) => labels[interest]).join(", ")}`
+          : `${product.popularity}% popularity`;
+        bottom.append(price, match);
+        card.append(top, title, description, rating, bottom);
+        return card;
+      }
+
+      async function loadCatalog() {
+        catalogStatus.textContent = "Loading products…";
+        const params = new URLSearchParams({
+          q: search.value,
+          category: categoryFilter.value,
+          sort: sortOrder.value,
+        });
+        try {
+          const response = await fetch(`/api/products?${params}`);
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || "Products could not be loaded.");
+          if (categoryFilter.options.length === 1) {
+            for (const category of data.categories) {
+              const option = document.createElement("option");
+              option.value = category;
+              option.textContent = category;
+              categoryFilter.append(option);
+            }
+          }
+          catalogResults.replaceChildren();
+          if (data.products.length === 0) {
+            catalogStatus.textContent = "No products match those filters.";
+            return;
+          }
+          for (const product of data.products) catalogResults.append(renderProduct(product));
+          catalogStatus.textContent = `${data.products.length} products`;
+        } catch (error) {
+          catalogStatus.textContent = error.message || "Something went wrong. Please try again.";
+        }
+      }
+
+      let searchTimer;
+      search.addEventListener("input", () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(loadCatalog, 200);
+      });
+      categoryFilter.addEventListener("change", loadCatalog);
+      sortOrder.addEventListener("change", loadCatalog);
+      loadCatalog();
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const selected = [...form.querySelectorAll('input[name="interest"]:checked')].map((input) => input.value);
+        recommendations.replaceChildren();
+        if (selected.length === 0) {
+          recommendationStatus.textContent = "Choose at least one interest to get started.";
+          return;
+        }
+
+        button.disabled = true;
+        recommendationStatus.textContent = "Finding your best matches…";
+        try {
+          const response = await fetch(`/api/recommendations?interests=${encodeURIComponent(selected.join(","))}`);
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || "Recommendations could not be loaded.");
+          for (const product of data.recommendations) {
+            recommendations.append(renderProduct(product, true));
+          }
+          recommendationStatus.textContent = "Your top matches, ranked by interests, ratings, and popularity.";
+        } catch (error) {
+          recommendationStatus.textContent = error.message || "Something went wrong. Please try again.";
+        } finally {
+          button.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
